@@ -98,6 +98,8 @@ internal class EditorialChartsRepository private constructor(context: Context) {
     }
 
     suspend fun cachedNewReleaseTracks(country: String, limit: Int, nativeOnly: Boolean = false): List<Track> = withContext(Dispatchers.IO) {
+        // Fork: personal-only. Same empty result the failure path returns.
+        if (NO_TRENDING) return@withContext emptyList()
         val now = System.currentTimeMillis()
         val snapshot = usableSnapshot(now)
         if (snapshot == null) {
@@ -110,6 +112,7 @@ internal class EditorialChartsRepository private constructor(context: Context) {
 
     suspend fun cachedExploreCollection(params: String, limit: Int): EditorialExploreCollection? =
         withContext(Dispatchers.IO) {
+            if (NO_TRENDING) return@withContext null // Fork: no editorial collections
             if (params.isBlank()) return@withContext null
             val now = System.currentTimeMillis()
             val snapshot = usableSnapshot(now)
@@ -123,6 +126,7 @@ internal class EditorialChartsRepository private constructor(context: Context) {
 
     suspend fun exploreCollection(params: String, limit: Int): EditorialExploreCollection? =
         withContext(Dispatchers.IO) {
+            if (NO_TRENDING) return@withContext null // Fork: no editorial collections
             if (params.isBlank()) return@withContext null
             val now = System.currentTimeMillis()
             val snapshot = usableSnapshot(now) ?: refreshAsync().await() ?: return@withContext null
@@ -131,6 +135,8 @@ internal class EditorialChartsRepository private constructor(context: Context) {
         }
 
     suspend fun newReleaseTracks(country: String, limit: Int): List<Track> = withContext(Dispatchers.IO) {
+        // Fork: personal-only. Same empty result the failure path returns.
+        if (NO_TRENDING) return@withContext emptyList()
         val now = System.currentTimeMillis()
         val snapshot = usableSnapshot(now) ?: refreshAsync().await() ?: return@withContext emptyList()
         if (snapshot.needsRefresh(now)) warm()
@@ -138,6 +144,8 @@ internal class EditorialChartsRepository private constructor(context: Context) {
     }
 
     suspend fun newReleasesByMarket(limit: Int): Map<String, List<Track>> = withContext(Dispatchers.IO) {
+        // Fork: personal-only. Same empty result the failure path returns.
+        if (NO_TRENDING) return@withContext emptyMap()
         val now = System.currentTimeMillis()
         val snapshot = usableSnapshot(now) ?: return@withContext emptyMap()
         if (snapshot.needsRefresh(now)) warm()

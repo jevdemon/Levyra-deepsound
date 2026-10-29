@@ -1,5 +1,7 @@
 package com.luc4n3x.levyra.data
 
+import com.luc4n3x.levyra.NO_TRENDING
+
 import com.luc4n3x.levyra.domain.HomeSection
 import com.luc4n3x.levyra.domain.LevyraContentLocales
 import com.luc4n3x.levyra.domain.LevyraLanguageCatalog
@@ -10,6 +12,8 @@ import kotlin.math.absoluteValue
 
 object LevyraStartupCatalog {
     fun homeSections(languageCode: String = LevyraLanguageCatalog.deviceDefault()): List<HomeSection> {
+        // Fork: no bundled starter songs.
+        if (NO_TRENDING) return emptyList()
         val locale = LevyraContentLocales.forLanguage(languageCode)
         val quick = listOf(
             track("Bohemian Rhapsody", "Queen", "Greatest Hits", "fJ9rUzIMcZQ", setOf("rock", "classic", "vocal"), 78, 82, 98),
@@ -130,6 +134,7 @@ object LevyraStartupCatalog {
     )
 
     private fun localTracks(languageCode: String): List<Track> {
+        if (NO_TRENDING) return emptyList()
         return when (LevyraLanguageCatalog.normalize(languageCode)) {
             "it" -> listOf(
                 track("LA FINE DEL MONDO", "Sgribaz feat. Disme", "Emotional Kid", "AFkftETigws", setOf("rap", "local", "hit"), 86, 70, 90),

@@ -1,5 +1,7 @@
 package com.luc4n3x.levyra.data
 
+import com.luc4n3x.levyra.NO_TRENDING
+
 import android.content.Context
 import com.luc4n3x.levyra.BuildConfig
 import com.luc4n3x.levyra.data.network.LevyraHttpClientFactory
@@ -1319,6 +1321,8 @@ open class YoutubeMusicRepository(private val context: Context? = null) {
 
     /** Real YouTube Music home feed parsed into titled sections, like the official app. */
     suspend fun homeFeed(languageCode: String = LevyraLanguageCatalog.deviceDefault()): List<HomeSection> = withContext(Dispatchers.IO) {
+        // Fork: personal-only. Same empty result the failure path returns.
+        if (NO_TRENDING) return@withContext emptyList()
         val sections = runCatching { homeFeedInnerTube(languageCode) }.getOrDefault(emptyList())
         sections.forEach { section -> section.tracks.forEach { memory[it.id] = it } }
         sections
@@ -1382,7 +1386,8 @@ open class YoutubeMusicRepository(private val context: Context? = null) {
                 )
                 .map { it.album }
         }
-        val homeAlbums = runCatching { homeAlbumFeedInnerTube(languageCode) }.getOrDefault(emptyList())
+        // Fork: no generic YouTube Music home albums.
+        val homeAlbums = if (NO_TRENDING) emptyList() else runCatching { homeAlbumFeedInnerTube(languageCode) }.getOrDefault(emptyList())
         val baseAlbums = (personalized + homeAlbums)
             .asSequence()
             .filter { it.releaseType == ReleaseType.Album }
@@ -1390,7 +1395,8 @@ open class YoutubeMusicRepository(private val context: Context? = null) {
             .filter { it.browseId.isNotBlank() || it.query.isNotBlank() }
             .distinctBy(::albumRecommendationDeduplicationKey)
             .toList()
-        val fallbackAlbums = if (baseAlbums.size >= boundedLimit) {
+        // Fork: no generic fallback album searches.
+        val fallbackAlbums = if (NO_TRENDING || baseAlbums.size >= boundedLimit) {
             emptyList()
         } else {
             val limiter = Semaphore(concurrency.coerceIn(1, ALBUM_RECOMMENDATION_CONCURRENCY))

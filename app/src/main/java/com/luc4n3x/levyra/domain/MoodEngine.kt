@@ -1,5 +1,7 @@
 package com.luc4n3x.levyra.domain
 
+import com.luc4n3x.levyra.NO_TRENDING
+
 class MoodEngine {
     val moods: List<Mood> = moodsForLanguage("it")
     val tastes: List<Taste> = tastesForLanguage("it")
@@ -115,7 +117,8 @@ class MoodEngine {
     fun queriesForTastes(ids: Set<String>, languageCode: String): List<String> {
         val locale = LevyraContentLocales.forLanguage(languageCode)
         val selected = ids.mapNotNull { id -> locale.tasteQueries[id] }.distinct()
-        return if (selected.isEmpty()) locale.homeQueries else selected
+        // Fork: with no genres picked, search for nothing instead of generic "top hits".
+        return if (selected.isEmpty()) { if (NO_TRENDING) emptyList() else locale.homeQueries } else selected
     }
 
     fun buildQueue(mood: Mood?, tracks: List<Track>): List<Track> {

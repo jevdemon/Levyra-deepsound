@@ -57,6 +57,13 @@ class DiscoveryEngine(
                     val anchored = profile.followsAny(track.artist)
                     val kind = if (anchored) DiscoveryReasonKind.FollowedArtist else DiscoveryReasonKind.NewRelease
                     DiscoveryCandidate(track, DiscoveryReason(kind), fresh = true, confidence = 6)
+                }.let { outcome ->
+                    // Fork: drop generic new releases; keep ones from followed artists.
+                    if (NO_TRENDING) {
+                        Outcome(outcome.candidates.filter { it.reason.kind == DiscoveryReasonKind.FollowedArtist }, outcome.failed)
+                    } else {
+                        outcome
+                    }
                 }
             }
             add {

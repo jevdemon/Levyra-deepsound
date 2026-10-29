@@ -91,7 +91,8 @@ class AppleMusicEditorialRepository private constructor(context: Context) {
     private val cacheDirectory by lazy { File(appContext.cacheDir, CACHE_DIRECTORY) }
     private val backoff = AppleCatalogBackoff()
 
-    suspend fun newMusic(storefront: String, language: String): AppleCatalogResult? = page(AppleCatalogPath.New, storefront, language)
+    suspend fun newMusic(storefront: String, language: String): AppleCatalogResult? =
+        if (NO_TRENDING) null else page(AppleCatalogPath.New, storefront, language)
 
     // Fork: no trending/chart content (null is the existing "unavailable" result).
     suspend fun topCharts(storefront: String, language: String): AppleCatalogResult? =
@@ -152,7 +153,8 @@ class AppleMusicEditorialRepository private constructor(context: Context) {
         page(AppleCatalogPath("curator/levyra/$curatorId", "curator-$curatorId"), storefront, language)?.page
             ?.takeIf { page -> page.shelves.any { shelf -> shelf.items.isNotEmpty() } }
 
-    suspend fun cachedNewMusic(storefront: String, language: String): AppleCatalogResult? = cachedPage(AppleCatalogPath.New, storefront, language)
+    suspend fun cachedNewMusic(storefront: String, language: String): AppleCatalogResult? =
+        if (NO_TRENDING) null else cachedPage(AppleCatalogPath.New, storefront, language)
 
     suspend fun cachedTopCharts(storefront: String, language: String): AppleCatalogResult? =
         if (NO_TRENDING) null else cachedPage(AppleCatalogPath.TopCharts, storefront, language)
