@@ -1,5 +1,7 @@
 package com.luc4n3x.levyra.data.apple
 
+import com.luc4n3x.levyra.NO_TRENDING
+
 import android.content.Context
 import com.luc4n3x.levyra.BuildConfig
 import com.luc4n3x.levyra.data.network.LevyraHttpClientFactory
@@ -91,7 +93,9 @@ class AppleMusicEditorialRepository private constructor(context: Context) {
 
     suspend fun newMusic(storefront: String, language: String): AppleCatalogResult? = page(AppleCatalogPath.New, storefront, language)
 
-    suspend fun topCharts(storefront: String, language: String): AppleCatalogResult? = page(AppleCatalogPath.TopCharts, storefront, language)
+    // Fork: no trending/chart content (null is the existing "unavailable" result).
+    suspend fun topCharts(storefront: String, language: String): AppleCatalogResult? =
+        if (NO_TRENDING) null else page(AppleCatalogPath.TopCharts, storefront, language)
 
     suspend fun newReleaseAlbums(storefront: String, language: String, limit: Int): List<AlbumHit> =
         appleNewReleaseAlbums(newMusic(storefront, language)?.page, limit)
@@ -150,7 +154,8 @@ class AppleMusicEditorialRepository private constructor(context: Context) {
 
     suspend fun cachedNewMusic(storefront: String, language: String): AppleCatalogResult? = cachedPage(AppleCatalogPath.New, storefront, language)
 
-    suspend fun cachedTopCharts(storefront: String, language: String): AppleCatalogResult? = cachedPage(AppleCatalogPath.TopCharts, storefront, language)
+    suspend fun cachedTopCharts(storefront: String, language: String): AppleCatalogResult? =
+        if (NO_TRENDING) null else cachedPage(AppleCatalogPath.TopCharts, storefront, language)
 
     suspend fun playlist(storefront: String, playlistId: String, language: String): AppleCatalogPlaylist? {
         val id = AppleCatalogIds.playlist(playlistId) ?: return null

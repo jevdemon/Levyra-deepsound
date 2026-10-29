@@ -1,5 +1,7 @@
 package com.luc4n3x.levyra.data
 
+import com.luc4n3x.levyra.NO_TRENDING
+
 import android.content.Context
 import com.luc4n3x.levyra.BuildConfig
 import com.luc4n3x.levyra.data.network.LevyraHttpClientFactory
@@ -152,6 +154,9 @@ class ChartsRepository(context: Context) {
     }
 
     suspend fun topSongs(country: String, limit: Int = 50): List<Track> {
+        // Fork: no trending/chart content. Returning the same empty result the
+        // network-failure path returns, which every caller already handles.
+        if (NO_TRENDING) return emptyList()
         val normalizedCountry = country.trim().lowercase().takeIf { it.length == 2 } ?: "it"
         val normalizedLimit = limit.coerceIn(1, 100)
         val shared = sharedRequest("$normalizedCountry/$normalizedLimit", normalizedCountry, normalizedLimit)

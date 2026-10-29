@@ -1,0 +1,67 @@
+name: Build Fork APK
+
+# Builds this fork the way F-Droid builds Levyra (-PlevyraFdroidBuild=true):
+# public InnerTube client key, no private service keys, no bundled native audio.
+# The release APK is signed with a throwaway key generated per run, so installing
+# a newer build over an older one requires uninstalling first.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6.4.0
+        with:
+          cache-disabled: true
+
+      - name: Build release APK (F-Droid configuration)
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --no-daemon assembleRelease -PlevyraFdroidBuild=true
+
+      - name: Sign APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          UNSIGNED="$(find app/build/outputs/apk/release -name '*.apk' -print -quit)"
+          test -f "${UNSIGNED}"
+          keytool -genkeypair -keystore fork.jks -storepass forkpass -keypass forkpass \
+            -alias fork -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Levyra fork" -noprompt
+          mkdir -p artifacts
+          "${ANDROID_HOME}/build-tools/36.0.0/apksigner" sign \
+            --ks fork.jks --ks-pass pass:forkpass --key-pass pass:forkpass \
+            --out artifacts/levyra-notrending.apk "${UNSIGNED}"
+          "${ANDROID_HOME}/build-tools/36.0.0/apksigner" verify artifacts/levyra-notrending.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: levyra-notrending
+          path: artifacts/levyra-notrending.apk

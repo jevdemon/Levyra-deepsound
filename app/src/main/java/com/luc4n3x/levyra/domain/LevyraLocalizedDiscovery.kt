@@ -1,5 +1,7 @@
 package com.luc4n3x.levyra.domain
 
+import com.luc4n3x.levyra.NO_TRENDING
+
 object LevyraLocalizedDiscovery {
     fun suggestions(query: String, languageCode: String, remote: List<String>): List<String> {
         val clean = query.trim().lowercase()
@@ -20,6 +22,8 @@ object LevyraLocalizedDiscovery {
     fun homeBoostQueries(languageCode: String, tasteIds: Set<String>): List<String> {
         val locale = LevyraContentLocales.forLanguage(languageCode)
         val tasteQueries = tasteIds.mapNotNull { id -> locale.tasteQueries[id] }
+        // Fork: only the genres the user picked; no generic "top hits"/"hits 2026" queries.
+        if (NO_TRENDING) return tasteQueries.distinctClean().take(10)
         return (tasteQueries + locale.homeQueries + contextualQueries("", locale.languageCode)).distinctClean().take(10)
     }
 

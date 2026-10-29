@@ -1,5 +1,7 @@
 package com.luc4n3x.levyra.feature.discovery
 
+import com.luc4n3x.levyra.NO_TRENDING
+
 import com.luc4n3x.levyra.domain.Track
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
@@ -69,12 +71,12 @@ class DiscoveryEngine(
                     }
                 }
             }
-            add {
+            if (!NO_TRENDING) add {
                 fetch { sources.regional(profile.market) }.map {
                     DiscoveryCandidate(it, DiscoveryReason(DiscoveryReasonKind.Trending), confidence = 2)
                 }
             }
-            if (profile.isColdStart) {
+            if (profile.isColdStart && !NO_TRENDING) {
                 add {
                     fetch { sources.editorial(profile.languageCode) }.map {
                         DiscoveryCandidate(it, DiscoveryReason(DiscoveryReasonKind.Editorial), confidence = 4)

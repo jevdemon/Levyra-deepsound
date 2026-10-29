@@ -1,5 +1,7 @@
 package com.luc4n3x.levyra.data
 
+import com.luc4n3x.levyra.NO_TRENDING
+
 import android.content.Context
 import android.util.AtomicFile
 import com.luc4n3x.levyra.BuildConfig
@@ -82,6 +84,9 @@ internal class EditorialChartsRepository private constructor(context: Context) {
     }
 
     suspend fun cachedTopTracks(country: String, limit: Int): List<Track> = withContext(Dispatchers.IO) {
+        // Fork: no trending/chart content. Returning the same empty result the
+        // network-failure path returns, which every caller already handles.
+        if (NO_TRENDING) return@withContext emptyList()
         val now = System.currentTimeMillis()
         val snapshot = usableSnapshot(now)
         if (snapshot == null) {
@@ -170,6 +175,9 @@ internal class EditorialChartsRepository private constructor(context: Context) {
     }
 
     suspend fun cachedAllMarkets(limit: Int): Map<String, List<Track>> = withContext(Dispatchers.IO) {
+        // Fork: no trending/chart content. Returning the same empty result the
+        // network-failure path returns, which every caller already handles.
+        if (NO_TRENDING) return@withContext emptyMap()
         val now = System.currentTimeMillis()
         val snapshot = usableSnapshot(now) ?: refreshAsync().await() ?: return@withContext emptyMap()
         if (snapshot.needsRefresh(now)) warm()
